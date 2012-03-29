@@ -1,0 +1,12 @@
+h1= title
+dl
+    dt Loan Amount
+        dl #{mortgage.OrginAmount}
+    dt Loan Balance
+        dl #{mortgage.Balance}
+    dt Unpaid Interest
+        dl #{mortgage.InterestUnpaid}
+
+ul
+    - for (var t in mortgage.Transaction)
+        li #{mortgage.Transaction[t].Date}
