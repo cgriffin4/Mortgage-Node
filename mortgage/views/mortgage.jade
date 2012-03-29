@@ -7,6 +7,16 @@ dl
     dt Unpaid Interest
         dl #{mortgage.InterestUnpaid}
 
-ul
-    - for (var t in mortgage.Transaction)
-        li #{mortgage.Transaction[t].Date}
+table
+    thead
+        th Date
+        th Principal
+        th Interest
+        th Amount
+    tbody
+        - for (var t in mortgage.Transaction)
+            tr
+                td #{mortgage.Transaction[t].Date}
+                td #{mortgage.Transaction[t].Principal}
+                td #{mortgage.Transaction[t].Interest}
+                td #{mortgage.Transaction[t].Amount}
