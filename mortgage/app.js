@@ -82,18 +82,19 @@ app.get('/m', function (req, res) {
             data.Balance = 0;
             data.InterestPaid = 0;
             data.PrincipalPaid = 0;
-            data.LastPayment = data.OriginDate;
+            data.LastPayment = data.OrginDate;
             for ( var t in data.Transaction) {
-                data.Balance += data.Transaction[t].Amount;
-                data.InterestPaid += data.Transaction[t].Interest;
-                data.PrincipalPaid += data.Transaction[t].Principal;
-                data.LastPayment = ( data.Transaction[t].Date > data.LastPayment ? data.Transaction[t].Date : data.LastPyment );
+                data.Balance += parseFloat(data.Transaction[t].Amount);
+                data.InterestPaid += parseFloat(data.Transaction[t].Interest);
+                data.PrincipalPaid += parseFloat(data.Transaction[t].Principal);
+                data.LastPayment = ( data.Transaction[t].Date > data.LastPayment ? data.Transaction[t].Date : data.LastPayment );
             }
             
-            //Outstanding Interest
+            //Outstanding Interest -- This only works if we assume all unpaid interest was paid at last payment
             data.InterestDaily = (( data.APY / 100 ) / 365 ) * data.Balance;
             var today = new Date();
-            data.InterestUnpaid = days_between(today, data.OrginDate) * data.InterestDaily;
+            data.daysToPayInterestOn = days_between(today, data.LastPayment)-1; //The last payment would have paid the interest through that day. (bug: before 1st payment, you get 1 day free interest)
+            data.InterestUnpaid = (data.daysToPayInterestOn * data.InterestDaily);
             
             //Render
             res.render('mortgage', { title: 'Mortgage' , mortgage : data });
