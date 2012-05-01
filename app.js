@@ -5,7 +5,9 @@
 var express = require('express')
   , mongoose = require('mongoose')
   , Schema = mongoose.Schema
-  , routes = require('./routes');
+  , routes = require('./routes')
+  , accounting = require('./public/javascripts/accounting.min.js')
+  , _ = require('underscore');
 
 var app = module.exports = express.createServer();
 
@@ -26,6 +28,13 @@ app.configure('development', function(){
 app.configure('production', function(){
   app.use(express.errorHandler());
 });
+
+//configure currency setting
+accounting.settings.currency.format = {
+    pos : "%s %v",   // for positive values, eg. "$ 1.00" (required)
+	neg : "%s (%v)", // for negative values, eg. "$ (1.00)" [optional]
+	zero: "%s  -- "  // for zero values, eg. "$  --" [optional]
+};
 
 // Utilities
 function days_between(date1, date2) {
@@ -75,16 +84,31 @@ app.get('/', function (req, res) {
         .run(function (err, m) {
             var data = m.toObject();
             
-            //Balances and amounts paid - everything from transactions
+            //Initialize Variables
             data.Balance = 0;
             data.InterestPaid = 0;
             data.PrincipalPaid = 0;
+            data.InterestDaily = 0;
+            data.InterestUnpaid = 0;
             data.LastPayment = data.OrginDate;
+            
+            //Sort the Transactions as Newest to Oldest
+            data.Transaction = _.sortBy(data.Transaction, 'Date').reverse();
+            
+            //Balances and amounts paid - everything from transactions
             for ( var t in data.Transaction) {
-                data.Balance += parseFloat(data.Transaction[t].Amount);
+                data.Balance += parseFloat(data.Transaction[t].Principal);
                 data.InterestPaid += parseFloat(data.Transaction[t].Interest);
-                data.PrincipalPaid += parseFloat(data.Transaction[t].Principal);
+                if (parseFloat(data.Transaction[t].Principal) < 0) data.PrincipalPaid += Math.abs(parseFloat(data.Transaction[t].Principal));
                 data.LastPayment = ( data.Transaction[t].Date > data.LastPayment ? data.Transaction[t].Date : data.LastPayment );
+                
+                //Format Money
+                data.Transaction[t].Principal = accounting.formatMoney(data.Transaction[t].Principal);
+                data.Transaction[t].Interest = accounting.formatMoney(data.Transaction[t].Interest);
+                data.Transaction[t].Amount = accounting.formatMoney(data.Transaction[t].Amount);
+                
+                //Format Date
+                data.Transaction[t].Date = new Date(data.Transaction[t].Date).toDateString();
             }
             
             //Outstanding Interest -- This only works if we assume all unpaid interest was paid at last payment
@@ -92,6 +116,17 @@ app.get('/', function (req, res) {
             var today = new Date();
             data.daysToPayInterestOn = days_between(today, data.LastPayment)-1; //The last payment would have paid the interest through that day. (bug: before 1st payment, you get 1 day free interest)
             data.InterestUnpaid = (data.daysToPayInterestOn * data.InterestDaily);
+            
+            //Format Date
+            data.LastPayment = new Date(data.LastPayment).toDateString();
+                
+            //Format Money
+            data.OrginAmount = accounting.formatMoney(data.OrginAmount);
+            data.Balance = accounting.formatMoney(data.Balance);
+            data.InterestPaid = accounting.formatMoney(Math.abs(data.InterestPaid));
+            data.PrincipalPaid = accounting.formatMoney(data.PrincipalPaid);
+            data.InterestDaily = accounting.formatMoney(data.InterestDaily);
+            data.InterestUnpaid = accounting.formatMoney(data.InterestUnpaid);
             
             //Render
             res.render('mortgage', { title: 'Mortgage' , mortgage : data });
