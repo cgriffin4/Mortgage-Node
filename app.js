@@ -1,4 +1,3 @@
-
 /**
  * Module dependencies.
  */
@@ -11,7 +10,6 @@ var express = require('express')
 var app = module.exports = express.createServer();
 
 // Configuration
-
 app.configure(function(){
   app.set('views', __dirname + '/views');
   app.set('view engine', 'jade');
@@ -72,8 +70,7 @@ var Mortgage = new Schema({
 var m = mongoose.model('Mortgage', Mortgage, 'mortgage');
 
 // Routes
-app.get('/', routes.index);
-app.get('/m', function (req, res) {
+app.get('/', function (req, res) {
     m.findOne({})
         .run(function (err, m) {
             var data = m.toObject();
@@ -101,5 +98,5 @@ app.get('/m', function (req, res) {
         });
 });
 
-app.listen(process.env.PORT);
+app.listen(process.env.PORT || 8001);
 console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
