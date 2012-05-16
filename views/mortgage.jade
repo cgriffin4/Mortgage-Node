@@ -1,62 +1,43 @@
-div.navbar.navbar-fixed-top
-  div.navbar-inner
-    div.container
-        a.brand(href='#') #{title}
-        span.pull-right
-            if user != 'undefined'
-                div.btn-group
-                    a.btn.btn-primary <i class="icon-user icon-white"></i> #{user.given_name}
-                    a.btn.btn-primary.dropdown-toggle(data-toggle="dropdown") &nbsp;
-                        span.caret
-                    ul.dropdown-menu
-                        li
-                            a(href='/logout') Logout
-            else 
-                a.btn.btn-primary(href="\?login_with=google2") Login
-div.container
-    div.hero-unit
-        h2 Loan Summary
-        dl.row
-            span.span4
-                dt Loan Amount
-                dd #{mortgage.OrginAmount}
-            span.span4
-                dt Loan Balance
-                dd #{mortgage.Balance}
-        dl.row
-            span.span4
-                dt Last Payment
-                dd #{mortgage.LastPayment}
-            span.span4
-                dt Unpaid Interest
-                dd #{mortgage.InterestUnpaid}
-        dl.row
-            span.span4
-                dt Principal Paid
-                dd #{mortgage.PrincipalPaid}
-            span.span4
-                dt Interest Paid
-                dd #{mortgage.InterestPaid}
-        dl.row
-            span.span4
-                dt Interest Daily
-                dd #{mortgage.InterestDaily}
-    div.row
-      div.span12
-        h2 Transaction Summary
-    table.table.table-striped.table-bordered
-        thead
-            th Date
-            th.money-label Principal
-            th.money-label Interest
-            th.money-label Amount
-        tbody
-            - for (var t in mortgage.Transaction)
-                tr
-                    td #{mortgage.Transaction[t].Date}
-                    td.money #{mortgage.Transaction[t].Principal}
-                    td.money #{mortgage.Transaction[t].Interest}
-                    td.money #{mortgage.Transaction[t].Amount}
-hr
-div.footer 
-    p &copy; Griffin 2012
+div.hero-unit
+    h2 Loan Summary
+    dl.row
+        span.span4
+            dt Loan Amount
+            dd #{mortgage.OrginAmount}
+        span.span4
+            dt Loan Balance
+            dd #{mortgage.Balance}
+    dl.row
+        span.span4
+            dt Last Payment
+            dd #{mortgage.LastPayment}
+        span.span4
+            dt Unpaid Interest
+            dd #{mortgage.InterestUnpaid}
+    dl.row
+        span.span4
+            dt Principal Paid
+            dd #{mortgage.PrincipalPaid}
+        span.span4
+            dt Interest Paid
+            dd #{mortgage.InterestPaid}
+    dl.row
+        span.span4
+            dt Interest Daily
+            dd #{mortgage.InterestDaily}
+div.row
+  div.span12
+    h2 Transaction Summary
+table.table.table-striped.table-bordered
+    thead
+        th Date
+        th.money-label Principal
+        th.money-label Interest
+        th.money-label Amount
+    tbody
+        - for (var t in mortgage.Transaction)
+            tr
+                td #{mortgage.Transaction[t].Date}
+                td.money #{mortgage.Transaction[t].Principal}
+                td.money #{mortgage.Transaction[t].Interest}
+                td.money #{mortgage.Transaction[t].Amount}

@@ -5,7 +5,26 @@ html
     link(rel='stylesheet', href='/stylesheets/bootstrap.min.css')
     link(rel='stylesheet', href='/stylesheets/style.css')
     script(src='//html5shim.googlecode.com/svn/trunk/html5.js')
-  body!= body
+    body
+        div.navbar.navbar-fixed-top
+            div.navbar-inner
+                div.container
+                    a.brand(href='#') #{title}
+                    span.pull-right
+                        if user != 'undefined'
+                            div.btn-group
+                                a.btn.btn-primary <i class="icon-user icon-white"></i> #{user.name}
+                                a.btn.btn-primary.dropdown-toggle(data-toggle="dropdown") &nbsp;
+                                    span.caret
+                                ul.dropdown-menu
+                                    li
+                                        a(href='/logout') Logout
+                        else 
+                            a.btn.btn-primary(href="\?login_with=google2") Login
+        div.container!= body
+        hr
+        div.footer 
+            p &copy; Griffin 2012
 
 script(src='//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js')
 script(src='/javascripts/bootstrap.min.js')
