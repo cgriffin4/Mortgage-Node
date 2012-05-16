@@ -1,7 +1,10 @@
 div.navbar.navbar-fixed-top
   div.navbar-inner
     div.container
-      a.brand(href='#') #{title}
+        a.brand(href='#') #{title}
+        span.pull-right
+            a.btn.btn-primary(href="https://accounts.google.com/o/oauth2/auth?response_type=token&scope=https://www.googleapis.com/auth/userinfo.profile&redirect_uri=http://mortgage-42.herokuapp.com/&client_id=129675806980.apps.googleusercontent.com") <i class="icon-user icon-white"></i> Login
+            a.btn.btn-primary(href="\?login_with=google") Google
 div.container
     div.hero-unit
         h2 Loan Summary
