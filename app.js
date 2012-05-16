@@ -64,7 +64,7 @@ var example_auth_middleware= function() {
             // We've either failed to authenticate, or succeeded (req.isAuthenticated() will confirm, as will the value of the received argument)
             if ( req.isAuthenticated() ) {
                 u.findOne({email:req.getAuthDetails().user.email}, function(error, data) {
-                    user = {email:data.email, name:data.name};    
+                    user = data.toObject();
                 });
             }
             next();
@@ -74,7 +74,7 @@ var example_auth_middleware= function() {
     else {
         if ( req.isAuthenticated() ) {
             u.findOne({email:req.getAuthDetails().user.email}, function(error, data) {
-                user = {email:data.email, name:data.name};    
+                user = data.toObject();
             });
         } else {
             user = defaultUser;
@@ -114,7 +114,7 @@ app.configure(function(){
 app.configure('development', function(){
     app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
     if (!user) {
-        user = defaultUser = {email:'chris.sgriffin', name:'Chris'};
+        user = defaultUser = {email:'chris.sgriffin@gmail.com', name:'Chris'};
     }
 });
 
@@ -178,7 +178,7 @@ var Users = new Schema({
 });
 
 var m = mongoose.model('Mortgage', Mortgage, 'mortgage');
-var u = mongoose.model('Mortgage', Users, 'users');
+var u = mongoose.model('users', Users, 'users');
 
 app.get("/mortgage", function(req, res) {
        m.findOne({Users:user.email})
