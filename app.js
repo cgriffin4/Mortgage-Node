@@ -23,10 +23,12 @@ function firstLoginHandler( authContext, executionResult, callback ) {
   if( users[executionResult.user.id] ) {
     // So here one would probably load in the local user representation for this 'user'
     console.log('Known USER: ' + executionResult.user.id);
+    next();
   } else {
     // So here one would probably 'register' the user in the local system.
     console.log('Brand new USER: ' + executionResult.user.id);
     users[executionResult.user.id]= true;
+    next();
   }
 }
 
