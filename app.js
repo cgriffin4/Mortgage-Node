@@ -23,14 +23,21 @@ function firstLoginHandler( authContext, executionResult, callback ) {
     if (data) {
         console.log('Known USER: ' + data.email);
         user = data;
+        redirect( authContext.request, authContext.response, '/mortgage');
     } else {
         console.log('Brand new USER: ' + executionResult.user.email);
         user = {email:executionResult.user.email, name:executionResult.user.given_name};
         var i = new u(user);
-        i.save();
+        i.save(function(err, user_Saved){
+            if(err){
+                throw err;
+                console.log(err);
+            }else{
+                console.log('saved!');
+                redirect( authContext.request, authContext.response, '/mortgage');
+            }
+        });
     }
-    
-    redirect( authContext.request, authContext.response, '/mortgage');
   });
 }
 
