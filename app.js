@@ -26,7 +26,8 @@ function firstLoginHandler( authContext, executionResult, callback ) {
     } else {
         console.log('Brand new USER: ' + executionResult.user.email);
         user = {email:executionResult.user.email, name:executionResult.user.given_name};
-        new u(user);
+        var i = new u(user);
+        i.save();
     }
     
     redirect( authContext.request, authContext.response, '/mortgage');
@@ -64,7 +65,12 @@ var example_auth_middleware= function() {
       }});
     }
     else {
-      next();
+        if ( req.isAuthenticated() ) {
+            u.findOne({email:req.getAuthDetails().user.email}, function(error, data) {
+                user = {email:data.email, name:data.name};    
+            });
+        }
+        next();
     }
   }
 };
