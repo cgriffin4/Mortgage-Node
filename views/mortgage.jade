@@ -6,10 +6,11 @@ div.navbar.navbar-fixed-top
             if user != 'undefined'
                 div.btn-group
                     a.btn.btn-primary <i class="icon-user icon-white"></i> #{user.given_name}
-                    a.btn.btn-primary.dropdown-toggle(data-toggle="dropdown", href='/logout')
+                    a.btn.btn-primary.dropdown-toggle(data-toggle="dropdown")
                         span.caret
                     ul.dropdown-menu
-                        li Test
+                        li
+                            a(href='/logout') Logout
             else 
                 a.btn.btn-primary(href="\?login_with=google2") Login
 div.container
