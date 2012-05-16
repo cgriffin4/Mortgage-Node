@@ -69,7 +69,6 @@ app.configure(function(){
     .use(express.session({secret:"secretkey"}))
     .use(express.bodyParser())
     .use(auth({strategies:[ auth.Anonymous(),
-        //auth.Google({consumerKey: '129675806980.apps.googleusercontent.com', consumerSecret: 'ca93uhyzKU0zhhF53Y9rK5nk', scope: "https://www.googleapis.com/auth/drive.file", callback: 'http://mortgage_node.cgriffin4.c9.io/auth/google_callback'})
         auth.Google2({appId : '129675806980.apps.googleusercontent.com', appSecret: 'ca93uhyzKU0zhhF53Y9rK5nk', callback: 'http://mortgage-42.herokuapp.com/oauth2callback', requestEmailPermission: true})
         ], trace: true}))
     .use(example_auth_middleware())
@@ -81,7 +80,6 @@ app.configure(function(){
         .run(function (err, m) {
             if( req.isAuthenticated() ) {
                 user = req.getAuthDetails().user;
-                console.log( req.getAuthDetails() );
             } else {
                 var user = 'undefined';
             }

@@ -5,7 +5,7 @@ div.navbar.navbar-fixed-top
         span.pull-right
             if user != 'undefined'
                 div.btn-group
-                    a.btn.btn-primary <i class="icon-user icon-white"></i> #{user.username}
+                    a.btn.btn-primary <i class="icon-user icon-white"></i> #{user.given_name}
                     a.btn.btn-primary.dropdown-toggle(data-toggle="dropdown", href='/logout')
                         span.caret
                     ul.dropdown-menu
