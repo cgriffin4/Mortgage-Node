@@ -87,9 +87,12 @@ app.configure(function(){
         firstLoginHandler: firstLoginHandler,
         logoutHandler: require('connect-auth/lib/events').redirectOnLogout("/")}))
     .use(example_auth_middleware())
-   .use('/logout', function(req, res, params) {
-     req.logout(); // Using the 'event' model to do a redirect on logout.
-   });
+    .use('/logout', function(req, res, params) {
+        req.logout(); // Using the 'event' model to do a redirect on logout.
+    })
+    .use("/", function(req, res, params) {
+        res.render("index", {title:'Mortgage', user: user});
+    });
 });
 
 app.configure('development', function(){
@@ -161,9 +164,6 @@ var Users = new Schema({
 var m = mongoose.model('Mortgage', Mortgage, 'mortgage');
 var u = mongoose.model('Mortgage', Users, 'users');
 
-app.get("/", function(req, res) {
-   res.render("index", {title:'Mortgage', user: user});
-});
 app.get("/mortgage", function(req, res) {
        m.findOne({Users:user.email})
         .run(function (err, m) {
