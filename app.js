@@ -58,8 +58,6 @@ var example_auth_middleware= function() {
                 u.findOne({email:req.getAuthDetails().user.email}, function(error, data) {
                     user = {email:data.email, name:data.name};    
                 });
-            } else {
-               user = {email:'chris.sgriffin', name:'Chris'};
             }
             next();
           }
