@@ -74,7 +74,7 @@ app.configure(function(){
         auth.Google2({appId : '129675806980.apps.googleusercontent.com', appSecret: 'ca93uhyzKU0zhhF53Y9rK5nk', callback: 'http://mortgage-42.herokuapp.com/oauth2callback', requestEmailPermission: true})
         ], 
         trace: true, 
-        firstLoginHandler: firstLoginHandler,
+        //firstLoginHandler: firstLoginHandler,
         logoutHandler: require('connect-auth/lib/events').redirectOnLogout("/")}))
     .use(example_auth_middleware())
    .use('/logout', function(req, res, params) {
