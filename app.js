@@ -1,7 +1,6 @@
 /**
  * Module dependencies.
  */
-
 var express = require('express')
   , mongoose = require('mongoose')
   , Schema = mongoose.Schema
@@ -10,10 +9,10 @@ var express = require('express')
   , _ = require('underscore')
   , url = require('url')
   , auth= require('connect-auth');
-
+  
 var app = module.exports = express.createServer();
+var defaultUser = 'undefined';
 
-var user;
 // Utilise the 'events' to do something on first load (test whether the user exists etc. etc. ) 
 function firstLoginHandler( authContext, executionResult, callback ) {
 
@@ -21,9 +20,11 @@ function firstLoginHandler( authContext, executionResult, callback ) {
   // this could be used for redirection in 'real' cases.
   u.findOne({email:executionResult.user.email},function(error, data) {
     if (data) {
-        user = data.toObject();
+        var user = data.toObject();
+        authContext.request.session.email = user.email;
+        
         console.log('Known USER: ' + user.email);
-        redirect( authContext.request, authContext.response, '/mortgage');
+        redirect( authContext.request, authContext.response, '/');
     } else {
         console.log('Brand new USER: ' + executionResult.user.email);
         user = {email:executionResult.user.email, name:executionResult.user.given_name};
@@ -34,7 +35,8 @@ function firstLoginHandler( authContext, executionResult, callback ) {
                 console.log(err);
             }else{
                 console.log('saved!');
-                redirect( authContext.request, authContext.response, '/mortgage');
+                authContext.request.session.email = user.email;
+                redirect( authContext.request, authContext.response, '/');
             }
         });
     }
@@ -62,28 +64,54 @@ var example_auth_middleware= function() {
             // The authentication strategy requires some more browser interaction, suggest you do nothing here!
           } else {
             // We've either failed to authenticate, or succeeded (req.isAuthenticated() will confirm, as will the value of the received argument)
-            if ( req.isAuthenticated() ) {
-                u.findOne({email:req.getAuthDetails().user.email}, function(error, data) {
-                    user = data.toObject();
-                });
+            if (req.isAuthenticated()) {
+                req.session.email = req.getAuthDetails().user.email;
+            } else {
+                req.session.email = defaultUser.email;
             }
             next();
           }
       }});
     }
     else {
-        if ( req.isAuthenticated() ) {
-            u.findOne({email:req.getAuthDetails().user.email}, function(error, data) {
-                user = data.toObject();
-            });
-        } else {
-            user = defaultUser;
-        }
-        
         next();
     }
   }
-};
+}
+
+function loadUser (req, res, next) {
+    if ( defaultUser != 'undefined' || (req.session && req.session.email) ) {
+        var half = false;
+        var email;
+        if (req.session) {
+            email = req.session.email;
+        } else {
+            email = defaultUser.email;
+        }
+        
+        u.findOne({email:email}, function(error, data) {
+            user = data.toObject();
+            res.locals.user = user;
+            console.log(user);
+            if (half) {
+                next();
+            } else {
+                half = true;
+            }
+        });
+        m.find({Users:email}, function(error, data) {
+            res.locals.mortgages = data;
+            if (half) {
+                next();
+            } else {
+                half = true;
+            }
+        });
+    } else {
+        res.locals.user = defaultUser;
+        next();
+    }
+}
 
 // Configuration
 app.configure(function(){
@@ -105,24 +133,16 @@ app.configure(function(){
     .use(example_auth_middleware())
     .use('/logout', function(req, res, params) {
         req.logout(); // Using the 'event' model to do a redirect on logout.
-    })
-    .use("/", function(req, res, params) {
-        res.render("index", {title:'Mortgage', user: user});
     });
 });
 
 app.configure('development', function(){
     app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
-    if (!user) {
-        user = defaultUser = {email:'chris.sgriffin@gmail.com', name:'Chris'};
-    }
+    defaultUser = {email:'chris.sgriffin@gmail.com', name:'Chris'};
 });
 
 app.configure('production', function(){
     app.use(express.errorHandler());
-    if (!user) {
-        user = defaultUser = 'undefined';
-    }
 });
 
 //configure currency setting
@@ -156,12 +176,13 @@ mongoose.connect('mongodb://dbuser:dbuser@ds031627.mongolab.com:31627/mortgage')
 var Transactions = new Schema({
       Date          : { type: Date }
     , Amount        : { type: Number }
-    , Principal     : { tpye: Number }
-    , Interest      : { tpye: Number }
+    , Principal     : { type: Number }
+    , Interest      : { type: Number }
 });
 
 var Mortgage = new Schema({
-    OrginAmount     :  { type: Number }
+    Name            :   { type: String }
+  , OrginAmount     :  { type: Number }
   , OrginDate       :  { type: Date }
   , FirstPayment    :  { type: Number }
   , APY             :  { type: Number }
@@ -180,60 +201,62 @@ var Users = new Schema({
 var m = mongoose.model('Mortgage', Mortgage, 'mortgage');
 var u = mongoose.model('users', Users, 'users');
 
-app.get("/mortgage", function(req, res) {
-       m.findOne({Users:user.email})
-        .run(function (err, m) {
+app.get("/", loadUser, function(req, res) {
+    res.render("index", {title:'Mortgage'});
+});
+
+app.get("/mortgage/:id", loadUser, function(req, res) {
+    m.findById(req.params.id,function (err, m) {
+        var data = m.toObject();
+        console.log(data);
+        //Initialize Variables
+        data.Balance = 0;
+        data.InterestPaid = 0;
+        data.PrincipalPaid = 0;
+        data.InterestDaily = 0;
+        data.InterestUnpaid = 0;
+        data.LastPayment = data.OrginDate;
+        
+        //Sort the Transactions as Newest to Oldest
+        data.Transaction = _.sortBy(data.Transaction, 'Date').reverse();
+        
+        //Balances and amounts paid - everything from transactions
+        for ( var t in data.Transaction) {
+            data.Balance += parseFloat(data.Transaction[t].Principal);
+            data.InterestPaid += parseFloat(data.Transaction[t].Interest);
+            if (parseFloat(data.Transaction[t].Principal) < 0) data.PrincipalPaid += Math.abs(parseFloat(data.Transaction[t].Principal));
+            data.LastPayment = ( data.Transaction[t].Date > data.LastPayment ? data.Transaction[t].Date : data.LastPayment );
             
-            var data = m.toObject();
-            
-            //Initialize Variables
-            data.Balance = 0;
-            data.InterestPaid = 0;
-            data.PrincipalPaid = 0;
-            data.InterestDaily = 0;
-            data.InterestUnpaid = 0;
-            data.LastPayment = data.OrginDate;
-            
-            //Sort the Transactions as Newest to Oldest
-            data.Transaction = _.sortBy(data.Transaction, 'Date').reverse();
-            
-            //Balances and amounts paid - everything from transactions
-            for ( var t in data.Transaction) {
-                data.Balance += parseFloat(data.Transaction[t].Principal);
-                data.InterestPaid += parseFloat(data.Transaction[t].Interest);
-                if (parseFloat(data.Transaction[t].Principal) < 0) data.PrincipalPaid += Math.abs(parseFloat(data.Transaction[t].Principal));
-                data.LastPayment = ( data.Transaction[t].Date > data.LastPayment ? data.Transaction[t].Date : data.LastPayment );
-                
-                //Format Money
-                data.Transaction[t].Principal = accounting.formatMoney(data.Transaction[t].Principal);
-                data.Transaction[t].Interest = accounting.formatMoney(data.Transaction[t].Interest);
-                data.Transaction[t].Amount = accounting.formatMoney(data.Transaction[t].Amount);
-                
-                //Format Date
-                data.Transaction[t].Date = new Date(data.Transaction[t].Date).toDateString();
-            }
-            
-            //Outstanding Interest -- This only works if we assume all unpaid interest was paid at last payment
-            data.InterestDaily = (( data.APY / 100 ) / 365 ) * data.Balance;
-            var today = new Date();
-            data.daysToPayInterestOn = days_between(today, data.LastPayment)-1; //The last payment would have paid the interest through that day. (bug: before 1st payment, you get 1 day free interest)
-            data.InterestUnpaid = (data.daysToPayInterestOn * data.InterestDaily);
+            //Format Money
+            data.Transaction[t].Principal = accounting.formatMoney(data.Transaction[t].Principal);
+            data.Transaction[t].Interest = accounting.formatMoney(data.Transaction[t].Interest);
+            data.Transaction[t].Amount = accounting.formatMoney(data.Transaction[t].Amount);
             
             //Format Date
-            data.LastPayment = new Date(data.LastPayment).toDateString();
-                
-            //Format Money
-            data.OrginAmount = accounting.formatMoney(data.OrginAmount);
-            data.Balance = accounting.formatMoney(data.Balance);
-            data.InterestPaid = accounting.formatMoney(Math.abs(data.InterestPaid));
-            data.PrincipalPaid = accounting.formatMoney(data.PrincipalPaid);
-            data.InterestDaily = accounting.formatMoney(data.InterestDaily);
-            data.InterestUnpaid = accounting.formatMoney(data.InterestUnpaid);
+            data.Transaction[t].Date = new Date(data.Transaction[t].Date).toDateString();
+        }
+        
+        //Outstanding Interest -- This only works if we assume all unpaid interest was paid at last payment
+        data.InterestDaily = (( data.APY / 100 ) / 365 ) * data.Balance;
+        var today = new Date();
+        data.daysToPayInterestOn = days_between(today, data.LastPayment)-1; //The last payment would have paid the interest through that day. (bug: before 1st payment, you get 1 day free interest)
+        data.InterestUnpaid = (data.daysToPayInterestOn * data.InterestDaily);
+        
+        //Format Date
+        data.LastPayment = new Date(data.LastPayment).toDateString();
             
-            //Render
-            res.render('mortgage', { title: 'Mortgage' , mortgage : data , user : user });
-        });
-   });
+        //Format Money
+        data.OrginAmount = accounting.formatMoney(data.OrginAmount);
+        data.Balance = accounting.formatMoney(data.Balance);
+        data.InterestPaid = accounting.formatMoney(Math.abs(data.InterestPaid));
+        data.PrincipalPaid = accounting.formatMoney(data.PrincipalPaid);
+        data.InterestDaily = accounting.formatMoney(data.InterestDaily);
+        data.InterestUnpaid = accounting.formatMoney(data.InterestUnpaid);
+        
+        //Render
+        res.render('mortgage', { title: 'Mortgage' , mortgage : data });
+    });
+});
 
 app.listen(process.env.PORT || 8001);
-console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
+console.log("Express server listening in %s mode", app.settings.env);

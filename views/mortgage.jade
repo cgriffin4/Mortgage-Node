@@ -1,43 +1,46 @@
-div.hero-unit
-    h2 Loan Summary
-    dl.row
-        span.span4
-            dt Loan Amount
-            dd #{mortgage.OrginAmount}
-        span.span4
-            dt Loan Balance
-            dd #{mortgage.Balance}
-    dl.row
-        span.span4
-            dt Last Payment
-            dd #{mortgage.LastPayment}
-        span.span4
-            dt Unpaid Interest
-            dd #{mortgage.InterestUnpaid}
-    dl.row
-        span.span4
-            dt Principal Paid
-            dd #{mortgage.PrincipalPaid}
-        span.span4
-            dt Interest Paid
-            dd #{mortgage.InterestPaid}
-    dl.row
-        span.span4
-            dt Interest Daily
-            dd #{mortgage.InterestDaily}
-div.row
-  div.span12
-    h2 Transaction Summary
-table.table.table-striped.table-bordered
-    thead
-        th Date
-        th.money-label Principal
-        th.money-label Interest
-        th.money-label Amount
-    tbody
-        - for (var t in mortgage.Transaction)
-            tr
-                td #{mortgage.Transaction[t].Date}
-                td.money #{mortgage.Transaction[t].Principal}
-                td.money #{mortgage.Transaction[t].Interest}
-                td.money #{mortgage.Transaction[t].Amount}
+extends layout
+
+block content
+    div.hero-unit
+        h2 Loan Summary
+        dl.row
+            span.span4
+                dt Loan Amount
+                dd #{mortgage.OrginAmount}
+            span.span4
+                dt Loan Balance
+                dd #{mortgage.Balance}
+        dl.row
+            span.span4
+                dt Last Payment
+                dd #{mortgage.LastPayment}
+            span.span4
+                dt Unpaid Interest
+                dd #{mortgage.InterestUnpaid}
+        dl.row
+            span.span4
+                dt Principal Paid
+                dd #{mortgage.PrincipalPaid}
+            span.span4
+                dt Interest Paid
+                dd #{mortgage.InterestPaid}
+        dl.row
+            span.span4
+                dt Interest Daily
+                dd #{mortgage.InterestDaily}
+    div.row
+      div.span12
+        h2 Transaction Summary
+    table.table.table-striped.table-bordered
+        thead
+            th Date
+            th.money-label Principal
+            th.money-label Interest
+            th.money-label Amount
+        tbody
+            - for (var t in mortgage.Transaction)
+                tr
+                    td #{mortgage.Transaction[t].Date}
+                    td.money #{mortgage.Transaction[t].Principal}
+                    td.money #{mortgage.Transaction[t].Interest}
+                    td.money #{mortgage.Transaction[t].Amount}

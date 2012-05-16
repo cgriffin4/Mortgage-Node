@@ -17,11 +17,17 @@ html
                                 a.btn.btn-primary.dropdown-toggle(data-toggle="dropdown") &nbsp;
                                     span.caret
                                 ul.dropdown-menu
+                                    - if (mortgages.length)
+                                        each item in mortgages
+                                            li
+                                                a(href="/mortgage/#{item.id}") #{item.Name}
+                                        li.divider
                                     li
                                         a(href='/logout') Logout
                         else 
                             a.btn.btn-primary(href="\?login_with=google2") Login
-        div.container!= body
+        div.container
+            block content
         hr
         div.footer 
             p &copy; Griffin 2012
