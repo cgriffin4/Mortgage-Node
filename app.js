@@ -9,49 +9,54 @@ var express = require('express')
   , accounting = require('./public/javascripts/accounting.min.js')
   , _ = require('underscore')
   , url = require('url')
-  , everyauth = require('everyauth');
+  //, auth= require('./node_modules/connect-auth/lib/index');
+  , auth= require('connect-auth');
 
 var app = module.exports = express.createServer();
-everyauth.helpExpress(app);
 
-everyauth.debug = true;
+var users= {};
+// Utilise the 'events' to do something on first load (test whether the user exists etc. etc. ) 
+function firstLoginHandler( authContext, executionResult, callback ) {
 
-var usersById = {};
-var nextUserId = 0;
-
-function addUser (source, sourceUser) {
-  var user;
-  if (arguments.length === 1) { // password-based
-    user = sourceUser = source;
-    user.id = ++nextUserId;
-    return usersById[nextUserId] = user;
-  } else { // non-password-based
-    user = usersById[++nextUserId] = {id: nextUserId};
-    user[source] = sourceUser;
+  // The originally request URL will be stored in : executionResult.originalUrl 
+  // this could be used for redirection in 'real' cases.
+  if( users[executionResult.user.id] ) {
+    // So here one would probably load in the local user representation for this 'user'
+    console.log('Known USER: ' + executionResult.user.id);
+  } else {
+    // So here one would probably 'register' the user in the local system.
+    console.log('Brand new USER: ' + executionResult.user.id);
+    users[executionResult.user.id]= true;
   }
-  return user;
 }
 
-var usersByGoogleId = {};
-var conf = {}
-conf.google = {
-        clientId: '129675806980.apps.googleusercontent.com'
-      , clientSecret: 'ca93uhyzKU0zhhF53Y9rK5nk'
-    };
-everyauth.everymodule
-  .findUserById( function (id, callback) {
-    callback(null, usersById[id]);
-  });
-everyauth.google
-  .appId(conf.google.clientId)
-  .appSecret(conf.google.clientSecret)
-  .scope('https://www.googleapis.com/auth/userinfo.profile https://www.google.com/m8/feeds/')
-  .findOrCreateUser( function (sess, accessToken, extra, googleUser) {
-    googleUser.refreshToken = extra.refresh_token;
-    googleUser.expiresIn = extra.expires_in;
-    return usersByGoogleId[googleUser.id] || (usersByGoogleId[googleUser.id] = addUser('google', googleUser));
-  })
-  .redirectPath('/');
+// This middleware detects login requests (in this case requests with a query param of ?login_with=xxx where xxx is a known strategy)
+var example_auth_middleware= function() {
+  return function(req, res, next) {
+    var urlp= url.parse(req.originalUrl, true)
+    if( urlp.query.login_with ) {
+      req.authenticate([urlp.query.login_with], function(error, authenticated) {
+        if( error ) {
+          // Something has gone awry, behave as you wish.
+          console.log( error );
+          res.end();
+      }
+      else {
+          if( authenticated === undefined ) {
+            // The authentication strategy requires some more browser interaction, suggest you do nothing here!
+          }
+          else {
+            // We've either failed to authenticate, or succeeded (req.isAuthenticated() will confirm, as will the value of the received argument)
+            next();
+          }
+      }});
+    }
+    else {
+      next();
+    }
+  }
+};
+
 // Configuration
 app.configure(function(){
   app.set('views', __dirname + '/views');
@@ -60,18 +65,27 @@ app.configure(function(){
   app.use(express.methodOverride());
   app.use(app.router);
   app.use(express.static(__dirname + '/public'))
-    .use(express.bodyParser())
-    .use(express.cookieParser())
+    .use(express.cookieParser('secretkey'))
     .use(express.session({secret:"secretkey"}))
-    .use(everyauth.middleware())
-});
-   
-app.get('/', function (req, res) {
+    .use(express.bodyParser())
+    .use(auth({strategies:[ auth.Anonymous(),
+        //auth.Google({consumerKey: '129675806980.apps.googleusercontent.com', consumerSecret: 'ca93uhyzKU0zhhF53Y9rK5nk', scope: "https://www.googleapis.com/auth/drive.file", callback: 'http://mortgage_node.cgriffin4.c9.io/auth/google_callback'})
+        auth.Google2({appId : '129675806980.apps.googleusercontent.com', appSecret: 'ca93uhyzKU0zhhF53Y9rK5nk', callback: 'http://mortgage_node.cgriffin4.c9.io/oauth2callback', requestEmailPermission: true})
+        ], trace: true}))
+    .use(example_auth_middleware())
+   .use('/logout', function(req, res, params) {
+     req.logout(); // Using the 'event' model to do a redirect on logout.
+   })
+   .use("/", function(req, res, params) {
        m.findOne({})
         .run(function (err, m) {
-            if (req.user) {
-                console.log(JSON.stringify(req.user));
+            if( req.isAuthenticated() ) {
+                user = req.getAuthDetails().user;
+                console.log( req.getAuthDetails() );
+            } else {
+                var user = 'undefined';
             }
+            
             var data = m.toObject();
             
             //Initialize Variables
@@ -118,11 +132,11 @@ app.get('/', function (req, res) {
             data.InterestDaily = accounting.formatMoney(data.InterestDaily);
             data.InterestUnpaid = accounting.formatMoney(data.InterestUnpaid);
             
-            var user = JSON.stringify(req.user);
             //Render
             res.render('mortgage', { title: 'Mortgage' , mortgage : data , user : user });
         });
    });
+});
 
 app.configure('development', function(){
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));

@@ -3,13 +3,15 @@ div.navbar.navbar-fixed-top
     div.container
         a.brand(href='#') #{title}
         span.pull-right
-            if everyauth.loggedIn
+            if user != 'undefined'
                 div.btn-group
                     a.btn.btn-primary <i class="icon-user icon-white"></i> #{user.username}
                     a.btn.btn-primary.dropdown-toggle(data-toggle="dropdown", href='/logout')
                         span.caret
+                    ul.dropdown-menu
+                        li Test
             else 
-                a.btn.btn-primary(href="/auth/google") Login
+                a.btn.btn-primary(href="\?login_with=google2") Login
 div.container
     div.hero-unit
         h2 Loan Summary
