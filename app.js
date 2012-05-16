@@ -9,37 +9,48 @@ var express = require('express')
   , accounting = require('./public/javascripts/accounting.min.js')
   , _ = require('underscore')
   , url = require('url')
-  //, auth= require('./node_modules/connect-auth/lib/index');
-  , auth= require('connect-auth');
+  , everyauth = require('everyauth');
 
 var app = module.exports = express.createServer();
 
-// This middleware detects login requests (in this case requests with a query param of ?login_with=xxx where xxx is a known strategy)
-var example_auth_middleware= function() {
-  return function(req, res, next) {
-    var urlp= url.parse(req.originalUrl, true)
-    if( urlp.query.login_with ) {
-      req.authenticate([urlp.query.login_with], function(error, authenticated) {
-        if( error ) {
-          // Something has gone awry, behave as you wish.
-          console.log( error );
-          res.end();
-      }
-      else {
-          if( authenticated === undefined ) {
-            // The authentication strategy requires some more browser interaction, suggest you do nothing here!
-          }
-          else {
-            // We've either failed to authenticate, or succeeded (req.isAuthenticated() will confirm, as will the value of the received argument)
-            next();
-          }
-      }});
-    }
-    else {
-      next();
-    }
+everyauth.debug = true;
+
+var usersById = {};
+var nextUserId = 0;
+
+function addUser (source, sourceUser) {
+  var user;
+  if (arguments.length === 1) { // password-based
+    user = sourceUser = source;
+    user.id = ++nextUserId;
+    return usersById[nextUserId] = user;
+  } else { // non-password-based
+    user = usersById[++nextUserId] = {id: nextUserId};
+    user[source] = sourceUser;
   }
-};
+  return user;
+}
+
+var usersByGoogleId = {};
+var conf = {}
+conf.google = {
+        clientId: '129675806980.apps.googleusercontent.com'
+      , clientSecret: 'ca93uhyzKU0zhhF53Y9rK5nk'
+    };
+everyauth.everymodule
+  .findUserById( function (id, callback) {
+    callback(null, usersById[id]);
+  });
+everyauth.google
+  .appId(conf.google.clientId)
+  .appSecret(conf.google.clientSecret)
+  .scope('https://www.googleapis.com/auth/userinfo.profile https://www.google.com/m8/feeds/')
+  .findOrCreateUser( function (sess, accessToken, extra, googleUser) {
+    googleUser.refreshToken = extra.refresh_token;
+    googleUser.expiresIn = extra.expires_in;
+    return usersByGoogleId[googleUser.id] || (usersByGoogleId[googleUser.id] = addUser('google', googleUser));
+  })
+  .redirectPath('/');
 
 // Configuration
 app.configure(function(){
@@ -49,24 +60,16 @@ app.configure(function(){
   app.use(express.methodOverride());
   app.use(app.router);
   app.use(express.static(__dirname + '/public'))
-    .use(express.cookieParser('my secret here'))
+    .use(express.cookieParser())
     .use(express.session({secret:"secretkey"}))
-    .use(express.bodyParser())
-    .use(auth({strategies:[ auth.Anonymous(),
-        auth.Google({consumerKey: '129675806980.apps.googleusercontent.com', consumerSecret: 'ca93uhyzKU0zhhF53Y9rK5nk', scope: "https://www.googleapis.com/auth/userinfo.profile", callback: 'http://mortgage-42.herokuapp.com/'})
-        ], trace: true }))
-    .use(example_auth_middleware())
-   .use('/logout', function(req, res, params) {
-     req.logout(); // Using the 'event' model to do a redirect on logout.
-   })
-   .use("/", function(req, res, params) {
+    .use(everyauth.middleware())
+});
+   
+app.get('/', function (req, res) {
        m.findOne({})
         .run(function (err, m) {
-            if( req.isAuthenticated() ) {
-                console.log('there');
-            }
-            if (req.query["access_token"]) {
-                console.log('here');
+            if (everyauth.google) {
+                console.log(JSON.stringify(everyauth.google.user));
             }
             var data = m.toObject();
             
@@ -114,11 +117,11 @@ app.configure(function(){
             data.InterestDaily = accounting.formatMoney(data.InterestDaily);
             data.InterestUnpaid = accounting.formatMoney(data.InterestUnpaid);
             
+            var user = JSON.stringify(everyauth.google.user);
             //Render
-            res.render('mortgage', { title: 'Mortgage' , mortgage : data });
+            res.render('mortgage', { title: 'Mortgage' , mortgage : data , user : user });
         });
    });
-});
 
 app.configure('development', function(){
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
