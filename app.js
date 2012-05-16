@@ -83,7 +83,7 @@ function loadUser (req, res, next) {
     if ( defaultUser != 'undefined' || (req.session && req.session.email) ) {
         var half = false;
         var email;
-        if (req.session) {
+        if (req.session && req.session.email) {
             email = req.session.email;
         } else {
             email = defaultUser.email;
@@ -91,6 +91,7 @@ function loadUser (req, res, next) {
         
         u.findOne({email:email}, function(error, data) {
             user = data.toObject();
+            //app.dynamicHelpers({user:user});
             res.locals.user = user;
             console.log(user);
             if (half) {
@@ -100,6 +101,7 @@ function loadUser (req, res, next) {
             }
         });
         m.find({Users:email}, function(error, data) {
+            //app.dynamicHelpers({mortgages:data});
             res.locals.mortgages = data;
             if (half) {
                 next();
@@ -108,6 +110,7 @@ function loadUser (req, res, next) {
             }
         });
     } else {
+        //app.dynamicHelpers({user:defaultUser});
         res.locals.user = defaultUser;
         next();
     }
@@ -115,25 +118,23 @@ function loadUser (req, res, next) {
 
 // Configuration
 app.configure(function(){
-  app.set('views', __dirname + '/views');
-  app.set('view engine', 'jade');
-  app.use(express.bodyParser());
-  app.use(express.methodOverride());
-  app.use(app.router);
   app.use(express.static(__dirname + '/public'))
     .use(express.cookieParser('secretkey'))
     .use(express.session({secret:"secretkey"}))
     .use(express.bodyParser())
+    .use(example_auth_middleware())
     .use(auth({strategies:[ auth.Anonymous(),
         auth.Google2({appId : '129675806980.apps.googleusercontent.com', appSecret: 'ca93uhyzKU0zhhF53Y9rK5nk', callback: 'http://mortgage-42.herokuapp.com/oauth2callback', requestEmailPermission: true})
         ], 
         trace: true, 
         firstLoginHandler: firstLoginHandler,
         logoutHandler: require('connect-auth/lib/events').redirectOnLogout("/")}))
-    .use(example_auth_middleware())
     .use('/logout', function(req, res, params) {
         req.logout(); // Using the 'event' model to do a redirect on logout.
     });
+    
+  app.set('views', __dirname + '/views');
+  app.set('view engine', 'jade');
 });
 
 app.configure('development', function(){
