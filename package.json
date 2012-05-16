@@ -6,7 +6,7 @@
     "npm":  "1.x"
   }
   , "dependencies": {
-      "express": "2.x"
+      "express": "latest"
     , "jade": ">= 0.0.1"
     , "mongoose" : ">= 2.5.13"
     , "underscore" : ">= 1.3.3"
