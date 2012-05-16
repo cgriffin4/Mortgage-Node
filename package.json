@@ -1,6 +1,10 @@
 {
     "name": "mortgage"
   , "version": "0.0.1"
+  , "engines": {
+    "node": "0.x",
+    "npm":  "1.x"
+  }
   , "dependencies": {
       "express": "3.x"
     , "jade": ">= 0.0.1"
