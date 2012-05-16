@@ -12,6 +12,7 @@ var express = require('express')
   , everyauth = require('everyauth');
 
 var app = module.exports = express.createServer();
+everyauth.helpExpress(app);
 
 everyauth.debug = true;
 
@@ -51,7 +52,6 @@ everyauth.google
     return usersByGoogleId[googleUser.id] || (usersByGoogleId[googleUser.id] = addUser('google', googleUser));
   })
   .redirectPath('/');
-
 // Configuration
 app.configure(function(){
   app.set('views', __dirname + '/views');
@@ -60,6 +60,7 @@ app.configure(function(){
   app.use(express.methodOverride());
   app.use(app.router);
   app.use(express.static(__dirname + '/public'))
+    .use(express.bodyParser())
     .use(express.cookieParser())
     .use(express.session({secret:"secretkey"}))
     .use(everyauth.middleware())
@@ -68,7 +69,7 @@ app.configure(function(){
 app.get('/', function (req, res) {
        m.findOne({})
         .run(function (err, m) {
-            if (req.user.loggedIn) {
+            if (req.user) {
                 console.log(JSON.stringify(req.user));
             }
             var data = m.toObject();
