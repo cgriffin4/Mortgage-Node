@@ -3,9 +3,9 @@ div.navbar.navbar-fixed-top
     div.container
         a.brand(href='#') #{title}
         span.pull-right
-            if user
+            if (everyauth.loggedIn)
                 div.btn-group
-                    a.btn.btn-primary <i class="icon-user icon-white"></i> #{user.username}
+                    a.btn.btn-primary <i class="icon-user icon-white"></i> JSON.stringify(everyauth.google.user)
                     a.btn.btn-primary.dropdown-toggle(data-toggle="dropdown", href='/logout')
                         span.caret
             else 
