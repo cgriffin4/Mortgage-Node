@@ -54,7 +54,7 @@ var example_auth_middleware= function() {
             // The authentication strategy requires some more browser interaction, suggest you do nothing here!
           } else {
             // We've either failed to authenticate, or succeeded (req.isAuthenticated() will confirm, as will the value of the received argument)
-            if ( req.is.isAuthenticated() ) {
+            if ( req.isAuthenticated() ) {
                 u.findOne({email:req.getAuthDetails().user.email}, function(error, data) {
                     user = {email:data.email, name:data.name};    
                 });
