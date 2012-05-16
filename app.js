@@ -69,7 +69,10 @@ var example_auth_middleware= function() {
             u.findOne({email:req.getAuthDetails().user.email}, function(error, data) {
                 user = {email:data.email, name:data.name};    
             });
+        } else {
+            user = defaultUser;
         }
+        
         next();
     }
   }
@@ -104,14 +107,14 @@ app.configure(function(){
 app.configure('development', function(){
     app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
     if (!user) {
-        user = {email:'chris.sgriffin', name:'Chris'};
+        user = defaultUser = {email:'chris.sgriffin', name:'Chris'};
     }
 });
 
 app.configure('production', function(){
     app.use(express.errorHandler());
     if (!user) {
-        user = 'undefined';
+        user = defaultUser = 'undefined';
     }
 });
 
