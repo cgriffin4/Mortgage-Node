@@ -21,8 +21,8 @@ function firstLoginHandler( authContext, executionResult, callback ) {
   // this could be used for redirection in 'real' cases.
   u.findOne({email:executionResult.user.email},function(error, data) {
     if (data) {
-        console.log('Known USER: ' + data.email);
-        user = data;
+        user = data.toObject();
+        console.log('Known USER: ' + user.email);
         redirect( authContext.request, authContext.response, '/mortgage');
     } else {
         console.log('Brand new USER: ' + executionResult.user.email);
