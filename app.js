@@ -68,8 +68,8 @@ app.configure(function(){
 app.get('/', function (req, res) {
        m.findOne({})
         .run(function (err, m) {
-            if (everyauth.google) {
-                console.log(JSON.stringify(everyauth.google.user));
+            if (req.user.loggedIn) {
+                console.log(JSON.stringify(req.user));
             }
             var data = m.toObject();
             
@@ -117,7 +117,7 @@ app.get('/', function (req, res) {
             data.InterestDaily = accounting.formatMoney(data.InterestDaily);
             data.InterestUnpaid = accounting.formatMoney(data.InterestUnpaid);
             
-            var user = JSON.stringify(everyauth.google.user);
+            var user = JSON.stringify(req.user);
             //Render
             res.render('mortgage', { title: 'Mortgage' , mortgage : data , user : user });
         });
