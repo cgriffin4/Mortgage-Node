@@ -26,8 +26,7 @@ html
                                         a(href='/logout') Logout
                         else 
                             a.btn.btn-primary(href="\?login_with=google2") Login
-        div.container
-            block content
+        div.container!= body
         hr
         div.footer 
             p &copy; Griffin 2012

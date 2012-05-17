@@ -91,8 +91,10 @@ function loadUser (req, res, next) {
         
         u.findOne({email:email}, function(error, data) {
             user = data.toObject();
-            //app.dynamicHelpers({user:user});
-            res.locals.user = user;
+            app.dynamicHelpers({user:function(req, res){
+                return user;
+              }});
+            //res.locals.user = user;
             console.log(user);
             if (half) {
                 next();
@@ -101,8 +103,10 @@ function loadUser (req, res, next) {
             }
         });
         m.find({Users:email}, function(error, data) {
-            //app.dynamicHelpers({mortgages:data});
-            res.locals.mortgages = data;
+            app.dynamicHelpers({mortgages:function(req, res){
+                return data;
+              }});
+            //res.locals.mortgages = data;
             if (half) {
                 next();
             } else {
@@ -110,8 +114,10 @@ function loadUser (req, res, next) {
             }
         });
     } else {
-        //app.dynamicHelpers({user:defaultUser});
-        res.locals.user = defaultUser;
+        app.dynamicHelpers({user:function(req, res){
+                return defaultUser;
+              }});
+        //res.locals.user = defaultUser;
         next();
     }
 }
