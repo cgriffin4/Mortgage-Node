@@ -136,9 +136,11 @@ app.configure(function(){
         logoutHandler: require('connect-auth/lib/events').redirectOnLogout("/")}))
     .use(example_auth_middleware())
     .use('/logout', function(req, res, params) {
+        req.session.destroy();
         if((req.session && req.session.email)) {
             delete req.session;
         }
+        
         req.logout(); // Using the 'event' model to do a redirect on logout.
     });
     
