@@ -3,7 +3,8 @@
  */
 var express = require('express')
   , url = require('url')
-  , auth= require('connect-auth');
+  , auth= require('connect-auth')
+  , db = require('./libs/db');
 
 var app = module.exports = express.createServer();
 
