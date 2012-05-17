@@ -10,7 +10,7 @@ function days_between (date1, date2) {
     var date2_ms = date2.getTime()
 
     // Calculate the difference in milliseconds
-    var difference_ms = Math.abs(date1_ms - date2_ms)
+    var difference_ms = date1_ms - date2_ms
     
     // Convert back to days and return
     return Math.round(difference_ms/ONE_DAY)
@@ -66,13 +66,16 @@ module.exports = function(app) {
             
             //The last payment would have paid the interest through that day. (bug: before 1st payment, you get 1 day free interest)
             //Bug fixed 5/16/2012
-            if (data.InterestPaid > 0) {
-                paidInterest = 1;
-            } else {
+            var paidInterest = 1;
+            if (data.InterestPaid == 0) {
                 paidInterest = 0;
             }
+            
             data.daysToPayInterestOn = days_between(today, data.LastPayment)-paidInterest;
-            data.InterestUnpaid = (data.daysToPayInterestOn * data.InterestDaily);
+            //Future dating
+            if (data.daysToPayInterestOn > 0) {
+                data.InterestUnpaid = (data.daysToPayInterestOn * data.InterestDaily);
+            }
             
             //Format Date
             data.LastPayment = new Date(data.LastPayment).toDateString();
