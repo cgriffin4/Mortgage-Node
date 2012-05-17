@@ -53,28 +53,27 @@ var example_auth_middleware= function() {
   return function(req, res, next) {
     var urlp= url.parse(req.originalUrl, true)
     if( urlp.query.login_with ) {
-      req.authenticate([urlp.query.login_with], function(error, authenticated) {
-        if( error ) {
-          // Something has gone awry, behave as you wish.
-          console.log( error );
-          res.end();
-      }
-      else {
-          if( authenticated === undefined ) {
-            // The authentication strategy requires some more browser interaction, suggest you do nothing here!
-          } else {
-            // We've either failed to authenticate, or succeeded (req.isAuthenticated() will confirm, as will the value of the received argument)
-            if (req.isAuthenticated()) {
-                req.session.email = req.getAuthDetails().user.email;
+        req.authenticate([urlp.query.login_with], function(error, authenticated) {
+            if( error ) {
+              // Something has gone awry, behave as you wish.
+              console.log( error );
+              res.end();
             } else {
-                req.session.email = defaultUser.email;
+              if( authenticated === undefined ) {
+                // The authentication strategy requires some more browser interaction, suggest you do nothing here!
+              } else {
+                // We've either failed to authenticate, or succeeded (req.isAuthenticated() will confirm, as will the value of the received argument)
+                if (req.isAuthenticated()) {
+                    req.session.email = req.getAuthDetails().user.email;
+                } else {
+                    req.session.email = defaultUser.email;
+                }
+                redirect( req, res, '/');
+                next();
+              }
             }
-            redirect( req, res, '/');
-            next();
-          }
-      }});
-    }
-    else {
+        });
+    } else {
         next();
     }
   }
@@ -137,6 +136,9 @@ app.configure(function(){
         logoutHandler: require('connect-auth/lib/events').redirectOnLogout("/")}))
     .use(example_auth_middleware())
     .use('/logout', function(req, res, params) {
+        if((req.session && req.session.email)) {
+            delete req.session;
+        }
         req.logout(); // Using the 'event' model to do a redirect on logout.
     });
     
