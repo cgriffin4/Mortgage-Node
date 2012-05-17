@@ -2,11 +2,10 @@ module.exports = function (app) {
     var db = require('./db');
     
     return function (req, res, next) {
-        if (process.env.node_env == 'production') {
+        if (process.env.NODE_ENV == 'production')
             defaultUser = 'undefined';
-        } else {
+        else
             defaultUser = {email:'chris.sgriffin@gmail.com',name:'Chris'};
-        }
         
         if ( defaultUser != 'undefined' || (req.session && req.session.email) ) {
             var half = false;
@@ -18,34 +17,29 @@ module.exports = function (app) {
             }
             
             db.u.findOne({email:email}, function(error, data) {
-                user = data.toObject();
                 app.dynamicHelpers({user:function(req, res){
-                    return user;
-                  }});
-                //res.locals.user = user;
-                console.log(user);
-                if (half) {
+                    return data.toObject();
+                }});
+                
+                if (half)
                     next();
-                } else {
+                else
                     half = true;
-                }
             });
             db.m.find({Users:email}, function(error, data) {
                 app.dynamicHelpers({mortgages:function(req, res){
                     return data;
-                  }});
-                //res.locals.mortgages = data;
-                if (half) {
+                }});
+                
+                if (half)
                     next();
-                } else {
+                else
                     half = true;
-                }
             });
         } else {
             app.dynamicHelpers({user:function(req, res){
-                    return defaultUser;
-                  }});
-            //res.locals.user = defaultUser;
+                return defaultUser;
+            }});
             next();
         }
     }
