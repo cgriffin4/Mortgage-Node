@@ -32,7 +32,7 @@ module.exports = function(app) {
     app.get("/mortgage/:id", loadUser, function(req, res) {
         db.m.findById(req.params.id,function (err, m) {
             var data = m.toObject();
-            console.log(data);
+            
             //Initialize Variables
             data.Balance = 0;
             data.InterestPaid = 0;
@@ -63,7 +63,15 @@ module.exports = function(app) {
             //Outstanding Interest -- This only works if we assume all unpaid interest was paid at last payment
             data.InterestDaily = (( data.APY / 100 ) / 365 ) * data.Balance;
             var today = new Date();
-            data.daysToPayInterestOn = days_between(today, data.LastPayment)-1; //The last payment would have paid the interest through that day. (bug: before 1st payment, you get 1 day free interest)
+            
+            //The last payment would have paid the interest through that day. (bug: before 1st payment, you get 1 day free interest)
+            //Bug fixed 5/16/2012
+            if (data.InterestPaid > 0) {
+                paidInterest = 1;
+            } else {
+                paidInterest = 0;
+            }
+            data.daysToPayInterestOn = days_between(today, data.LastPayment)-paidInterest;
             data.InterestUnpaid = (data.daysToPayInterestOn * data.InterestDaily);
             
             //Format Date
