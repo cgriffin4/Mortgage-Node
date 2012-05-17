@@ -15,7 +15,6 @@ var Mortgage = new Schema({
     Name            :   { type: String }
   , OrginAmount     :  { type: Number }
   , OrginDate       :  { type: Date }
-  , FirstPayment    :  { type: Number }
   , APY             :  { type: Number }
   , Length          :  { type: Number }
   , Payment         :  { type: Number }
