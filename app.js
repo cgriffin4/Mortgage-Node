@@ -6,7 +6,6 @@ var express = require('express')
   , auth= require('connect-auth');
 
 var app = module.exports = express.createServer();
-var routes = require('./routes')(app);
 
 function redirect(req, res, location) {
   res.writeHead(303, { 'Location': location });
@@ -50,32 +49,29 @@ app.configure(function(){
             },
         logoutHandler: require('connect-auth/lib/events').redirectOnLogout("/")}))
     .use(function(req, res, next) {
-            var urlp= url.parse(req.originalUrl, true)
-            if( urlp.query.login_with ) {
-                req.authenticate([urlp.query.login_with], function(error, authenticated) {
-                    if( error ) {
-                      // Something has gone awry, behave as you wish.
-                      console.log( error );
-                      res.end();
+        var urlp= url.parse(req.originalUrl, true);
+        
+        if( urlp.query.login_with ) {
+            req.authenticate([urlp.query.login_with], function(error, authenticated) {
+                if( error ) {
+                  console.log( error );
+                  res.end();
+                } else {
+                  if( authenticated !== undefined ) {
+                    if (req.isAuthenticated()) {
+                        req.session.email = req.getAuthDetails().user.email;
                     } else {
-                      if( authenticated === undefined ) {
-                        // The authentication strategy requires some more browser interaction, suggest you do nothing here!
-                      } else {
-                        // We've either failed to authenticate, or succeeded (req.isAuthenticated() will confirm, as will the value of the received argument)
-                        if (req.isAuthenticated()) {
-                            req.session.email = req.getAuthDetails().user.email;
-                        } else {
-                            req.session.destroy();
-                        }
-                        redirect( req, res, '/');
-                        next();
-                      }
+                        req.session.destroy();
                     }
-                });
-            } else {
-                next();
-            }
-          })
+                    redirect( req, res, '/');
+                    next();
+                  }
+                }
+            });
+        } else {
+            next();
+        }
+      })
     .use('/logout', function(req, res, params) {
         req.session.destroy();
         if((req.session && req.session.email)) {
@@ -97,5 +93,6 @@ app.configure('production', function(){
     app.use(express.errorHandler());
 });
 
+var routes = require('./routes')(app);
 app.listen(process.env.PORT || 8001);
 console.log("Express server listening in %s mode", app.settings.env);
