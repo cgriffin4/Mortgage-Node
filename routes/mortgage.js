@@ -55,6 +55,7 @@ module.exports = function(app) {
                 data.Transaction[t].Principal = accounting.formatMoney(data.Transaction[t].Principal);
                 data.Transaction[t].Interest = accounting.formatMoney(data.Transaction[t].Interest);
                 data.Transaction[t].Amount = accounting.formatMoney(data.Transaction[t].Amount);
+                data.Payment = accounting.formatMoney(data.Payment);
                 
                 //Format Date
                 data.Transaction[t].Date = new Date(data.Transaction[t].Date).toDateString();
@@ -78,7 +79,11 @@ module.exports = function(app) {
             }
             
             //Format Date
-            data.LastPayment = new Date(data.LastPayment).toDateString();
+            if (paidInterest) {
+                data.LastPayment = new Date(data.LastPayment).toDateString();
+            } else {
+                data.LastPayment = '--';
+            }
                 
             //Format Money
             data.OrginAmount = accounting.formatMoney(data.OrginAmount);

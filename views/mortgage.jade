@@ -1,39 +1,47 @@
+style
+    dt {
+        display:inline;
+    }
+
 div.hero-unit
     h2 Loan Summary
     dl.row
         span.span4
-            dt Loan Amount
+            dt.pop(data-content="Total amount of the original loan distribution.",data-original-title="Borrowed Amount") Loan Amount
             dd #{mortgage.OrginAmount}
         span.span4
-            dt Loan Balance
-            dd #{mortgage.Balance}
+            dt.pop(data-content="The minimum amount that must be paid every month to avoid default.  This is calculated once, at the beginning of the loan and is due on the 1<sup>st</sup> of every month.",data-original-title="Payment Amount") Monthly Payment
+            dd #{mortgage.Payment}
     dl.row
         span.span4
-            dt Last Payment
+            dt.pop(data-content="The date the last payment was made.  All payments pay a minimum amount equal to the unpaid interest.",data-original-title="Date of Last Payment") Last Payment
             dd #{mortgage.LastPayment}
         span.span4
-            dt Unpaid Interest
+            dt.pop(data-content="The unpaid interest plus the loan balance is the total amount owed.  Interest is accumulated daily since the last payment date.",data-original-title="Amount of Interest Owed") Unpaid Interest
             dd #{mortgage.InterestUnpaid}
     dl.row
         span.span4
-            dt Principal Paid
+            dt.pop(data-content="Total principal paid to date.  Amount of the original borrowed total which has been paid.",data-original-title="Principal") Principal Paid
             dd #{mortgage.PrincipalPaid}
         span.span4
-            dt Interest Paid
+            dt.pop(data-content="Total interest paid to date.  Amount that has been paid in exchange for the loan.",data-original-title="Interest Accumulated Total") Interest Paid
             dd #{mortgage.InterestPaid}
     dl.row
         span.span4
-            dt Interest Daily
+            dt.pop(data-content="Money added daily to the amount owed.  Calculated as #{( mortgage.APY ) / 365}% of the loan balance.",data-original-title="Interest Accumulated Daily") Interest Daily
             dd #{mortgage.InterestDaily}
+        span.span4
+            dt.pop(data-content="Current balance owed on the loan.  Calculated as the original borrowed amount minus any payments towards the principal.",data-original-title="Balance") Loan Balance
+            dd #{mortgage.Balance}
 div.row
   div.span12
     h2 Transaction Summary
 table.table.table-striped.table-bordered
     thead
-        th Date
-        th.money-label Principal
-        th.money-label Interest
-        th.money-label Total
+        th.pop(data-content="Date the transaction was applied to the loan.",data-original-title="Date",data-placement="top") Date
+        th.money-label.pop(data-content="Amount of the transaction applied towards the principal of the loan.",data-original-title="Principal",data-placement="top") Principal
+        th.money-label.pop(data-content="Amount of the transaction applied towards the unpaid interest of the loan.  This represents the unpaid interest amount at the time of the transaction.",data-original-title="Interest",data-placement="top") Interest
+        th.money-label.pop(data-content="Total amount of the transaction.  Loan disbursements are recorded as positive amounts while loan payments are negative transactions.",data-original-title="Amount",data-placement="top") Total
     tbody
         - for (var t in mortgage.Transaction)
             tr
