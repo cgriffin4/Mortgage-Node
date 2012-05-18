@@ -34,7 +34,7 @@ app.configure(function(){
                 } else {
                     console.log('Brand new USER: ' + executionResult.user.email);
                     user = {email:executionResult.user.email, name:executionResult.user.given_name};
-                    var i = new u(user);
+                    var i = new db.u(user);
                     i.save(function(err, user_Saved){
                         if(err){
                             throw err;
