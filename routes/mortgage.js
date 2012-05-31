@@ -55,14 +55,13 @@ module.exports = function(app) {
                 data.Transaction[t].Principal = accounting.formatMoney(data.Transaction[t].Principal);
                 data.Transaction[t].Interest = accounting.formatMoney(data.Transaction[t].Interest);
                 data.Transaction[t].Amount = accounting.formatMoney(data.Transaction[t].Amount);
-                data.Payment = accounting.formatMoney(data.Payment);
                 
                 //Format Date
                 data.Transaction[t].Date = new Date(data.Transaction[t].Date).toDateString();
             }
             
             //Outstanding Interest -- This only works if we assume all unpaid interest was paid at last payment
-            data.InterestDaily = (( data.APY / 100 ) / 365 ) * data.Balance;
+            data.InterestDaily = ( data.APY / 365 ) * data.Balance;
             var today = new Date();
             
             //The last payment would have paid the interest through that day. (bug: before 1st payment, you get 1 day free interest)
@@ -84,7 +83,21 @@ module.exports = function(app) {
             } else {
                 data.LastPayment = '--';
             }
-                
+            
+            //Calculate Time Remaining - no extra payments
+            data.TimeRemaining = -(LN(1 - (data.Balance / data.Payment) * (data.APY / 12)) / LN(1 + (data.APY / 12))) / 12;
+            var day = Math.floor(data.TimeRemaining * 365);
+            data.TimeRemaining = Math.round(data.TimeRemaining * 100) / 100;
+            
+            data.PayoffDate = new Date();
+            data.PayoffDate.setDate(data.PayoffDate.getDate()+day);
+            data.PayoffDate.setDate(1);
+            data.PayoffDate = data.PayoffDate.toDateString();
+            
+            //Format APY
+            data.APY = (data.APY * 100);
+            data.APY = data.APY.toFixed(2);
+            
             //Format Money
             data.OrginAmount = accounting.formatMoney(data.OrginAmount);
             data.Balance = accounting.formatMoney(data.Balance);
@@ -92,9 +105,14 @@ module.exports = function(app) {
             data.PrincipalPaid = accounting.formatMoney(data.PrincipalPaid);
             data.InterestDaily = accounting.formatMoney(data.InterestDaily);
             data.InterestUnpaid = accounting.formatMoney(data.InterestUnpaid);
+            data.Payment = accounting.formatMoney(data.Payment);
             
             //Render
             res.render('mortgage', { title: 'Mortgage' , mortgage : data });
         });
     });
+}
+
+function LN(val) {
+    return Math.log(val) / Math.LOG10E;
 }
