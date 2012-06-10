@@ -40,6 +40,13 @@ div.hero-unit
         span.span4
             dt.pop(data-content="Current balance owed on the loan.  Calculated as the original borrowed amount minus any payments towards the principal.",data-original-title="Balance") Loan Balance
             dd #{mortgage.Balance}
+    dl.row
+        span.span4
+            dt.pop(data-content="Due to extra payments the loan will be paid off #{mortgage.TimeEarly} years earlier than originally scheduled.",data-original-title="Loan Length Shortened") Time Saved
+            dd #{mortgage.TimeEarly} years early
+        span.span4
+            dt.pop(data-content="Due to extra payments the total interest paid over the length of the loan is currently estimated to be #{mortgage.EstimatedInterest}, compared to the original estimate of #{mortgage.OriginalInterest}.",data-original-title="Loan Interest Saved") Interest Saved
+            dd #{mortgage.InterestSaved}
 div.row
   div.span12
     h2 Transaction Summary

@@ -48,8 +48,10 @@ module.exports = function(app) {
             for ( var t in data.Transaction) {
                 data.Balance += parseFloat(data.Transaction[t].Principal);
                 data.InterestPaid += parseFloat(data.Transaction[t].Interest);
-                if (parseFloat(data.Transaction[t].Principal) < 0) data.PrincipalPaid += Math.abs(parseFloat(data.Transaction[t].Principal));
-                data.LastPayment = ( data.Transaction[t].Date > data.LastPayment ? data.Transaction[t].Date : data.LastPayment );
+                if (parseFloat(data.Transaction[t].Principal) < 0) {
+                    data.PrincipalPaid += Math.abs(parseFloat(data.Transaction[t].Principal));
+                    data.LastPayment = ( data.Transaction[t].Date > data.LastPayment ? data.Transaction[t].Date : data.LastPayment );
+                }
                 
                 //Format Money
                 data.Transaction[t].Principal = accounting.formatMoney(data.Transaction[t].Principal);
@@ -86,13 +88,43 @@ module.exports = function(app) {
             
             //Calculate Time Remaining - no extra payments
             data.TimeRemaining = -(LN(1 - (data.Balance / data.Payment) * (data.APY / 12)) / LN(1 + (data.APY / 12))) / 12;
-            var day = Math.floor(data.TimeRemaining * 365);
+            data.TimeEarly = (data.Length / 12) - data.TimeRemaining;
             data.TimeRemaining = Math.round(data.TimeRemaining * 100) / 100;
+            data.TimeEarly = Math.round(data.TimeEarly * 100) / 100;
             
+            var day = Math.floor(data.TimeRemaining * 365);
             data.PayoffDate = new Date();
             data.PayoffDate.setDate(data.PayoffDate.getDate()+day);
             data.PayoffDate.setDate(1);
             data.PayoffDate = data.PayoffDate.toDateString();
+            
+            //calculate total interest
+            var bad = {};
+            bad.Remaining = data.OrginAmount;
+            data.OriginalInterest = 0;
+            for (i=0; i < data.Length; i++) {
+                bad.MonthInterest = (data.APY / 12) * bad.Remaining;
+                bad.MonthInterest = parseFloat(bad.MonthInterest).toFixed(2);
+                bad.MonthPrincipal = data.Payment - bad.MonthInterest;
+                bad.MonthPrincipal = parseFloat(bad.MonthPrincipal).toFixed(2);
+                bad.Remaining = bad.Remaining - bad.MonthPrincipal;
+                
+                data.OriginalInterest = data.OriginalInterest + parseFloat(bad.MonthInterest);
+            }
+            
+            //calculate remaining interest
+            var temp = {};
+            temp.Remaining = data.Balance;
+            data.EstimatedInterest = data.InterestPaid;
+            while (temp.Remaining > 0) {
+                temp.MonthInterest = (data.APY / 12) * temp.Remaining;
+                temp.MonthPrincipal = data.Payment - temp.MonthInterest;
+                temp.Remaining = temp.Remaining - temp.MonthPrincipal;
+                
+                data.EstimatedInterest = data.EstimatedInterest + temp.MonthInterest;
+            }
+            
+            data.InterestSaved = data.OriginalInterest - data.EstimatedInterest;
             
             //Format APY
             data.APY = (data.APY * 100);
@@ -102,6 +134,9 @@ module.exports = function(app) {
             data.OrginAmount = accounting.formatMoney(data.OrginAmount);
             data.Balance = accounting.formatMoney(data.Balance);
             data.InterestPaid = accounting.formatMoney(Math.abs(data.InterestPaid));
+            data.EstimatedInterest = accounting.formatMoney(Math.abs(data.EstimatedInterest));
+            data.OriginalInterest = accounting.formatMoney(Math.abs(data.OriginalInterest));
+            data.InterestSaved = accounting.formatMoney(Math.abs(data.InterestSaved));
             data.PrincipalPaid = accounting.formatMoney(data.PrincipalPaid);
             data.InterestDaily = accounting.formatMoney(data.InterestDaily);
             data.InterestUnpaid = accounting.formatMoney(data.InterestUnpaid);
